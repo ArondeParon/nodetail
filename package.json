@@ -1,0 +1,23 @@
+{
+  "name": "nodetail",
+  "version": "1.0.0",
+  "description": "",
+  "main": "tail.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ArondeParon/nodetail.git"
+  },
+  "author": "Aron Rotteveel",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ArondeParon/nodetail/issues"
+  },
+  "homepage": "https://github.com/ArondeParon/nodetail#readme",
+  "dependencies": {
+    "express": "^4.13.3",
+    "socket.io": "^1.3.7"
+  }
+}
