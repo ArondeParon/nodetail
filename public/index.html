@@ -1,0 +1,180 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Status</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.0.0-alpha1/jquery.min.js"></script>
+    <script src="https://cdn.socket.io/socket.io-1.3.7.js"></script>
+    <script src="http://cdn.jsdelivr.net/vue/1.0.13/vue.min.js"></script>
+    <script src="//d3js.org/d3.v3.min.js" charset="utf-8"></script>
+    <script>
+        $(function () {
+		var socket = io.connect();
+		var hostmap = {};
+		var sourcemap = {};
+		var total_requests = 0;
+
+		// some graphing stuff
+		var width = 640, height = 480, nodes = [], links = [];
+
+		Vue.component('x-host', { 
+			template: '#host-template',
+			props: [ 'name', 'count' ],
+			computed: { 
+				percentage: function() {
+					return (this.count/app.total_requests)*100;
+				}
+			}
+
+		});
+		Vue.component('x-source', { 
+			template: '#source-template',
+			props: [ 'name', 'count' ],
+			computed: { 
+				percentage: function() {
+					return (this.count/app.total_requests)*100;
+				}
+			}
+
+		});
+
+
+		var app = new Vue({
+			el: "#app",
+			data: {
+				total_requests: 0,
+				hosts: [],
+				sources: []
+			}
+		});
+
+            socket.on('web_update', function (data) {
+		app.total_requests++;
+		// push graph items
+		if (typeof(hostmap[data.host]) == 'undefined') {
+			nodes.push(data.host); // push graph node
+		}
+
+		hostmap[data.host] = (hostmap[data.host] = hostmap[data.host]+1) || 1;
+		app.hosts.push({
+			name: data.host,
+			count: hostmap[data.host]
+		});
+		sourcemap[data.source] = (sourcemap[data.source] = sourcemap[data.source]+1) || 1;
+		app.sources.push({
+			name: data.source,
+			count: sourcemap[data.source]
+		});
+            });
+
+
+        });
+    </script>
+
+    <style>
+
+	* {
+		box-sizing: border-box;
+	}
+
+	#app {
+		margin: 50px 0;
+	}
+
+	.column {
+		float: left;
+		width: 50%;
+		padding: 15px;	
+	}
+
+	.column::after {
+		display: block;
+		clear: both;
+		content: "";
+	}
+
+	#total {
+		position: fixed;
+		top: 15px;
+		right: 15px;
+	}
+
+	.graph {
+		border: 1px solid #ddd;
+		height: 400px;
+		padding: 0;
+		display: -webkit-flex;
+		display: flex;
+		-webkit-align-items: flex-end;
+		align-items: flex-end;
+		flex-wrap: wrap;
+	}
+	.graph div {
+		min-width: 5px;
+		max-width: 100px;
+		border-right: 1px solid #fff;
+		background: #ddd;
+		flex-grow: 1;
+	}
+
+	.graph div::after {
+		display: none;
+		position: fixed;
+		width: 300px;
+		top: 15px;
+		left: 15px;
+		content: attr(data-title) " ";
+		font-family: Helvetica, sans-serif;
+		font-size: 16px;
+		color: #fff;
+		background: #111;
+		padding: 10px;
+	}
+
+	.graph div:hover::after {
+		display: block;
+	}
+    </style>
+</head>
+
+<body>
+	<script type="text/template" id="host-template">
+	<div v-if="percentage > 2" data-count="{{ count }}" style="height:{{ percentage }}%;" data-title="{{ name }} - {{ count }} requests">
+	</div>
+	</script>
+	<script type="text/template" id="source-template">
+	<div v-if="percentage > 2" data-count="{{ count }}" style="height:{{ percentage }}%;" data-title="{{ name }} - {{ count }} requests">
+	</div>
+	</script>
+
+	<div id="app">
+		<div id="total">{{ total_requests }}</div>
+
+		<div class="column">
+			<h2>Traffic sources</h2>
+			<div class="graph">
+				<x-source v-for="source in sources" track-by="name" :name="source.name" :count="source.count"></x-source>
+			</div>
+			<ul>
+				<li v-for="source in sources" track-by="name">
+					{{ source.name }} - {{ source.count }} requests
+				</li>
+			</ul>
+
+		</div>
+		<div class="column">
+			<h2>Traffic destinations</h2>
+			<div class="graph">
+				<x-host v-for="host in hosts" track-by="name" :name="host.name" :count="host.count"></x-host>
+			</div>
+			<ul>
+				<li v-for="host in hosts" track-by="name">
+					{{ host.name }} - {{ host.count }} requests
+				</li>
+			</ul>
+		</div>
+	</div>
+</body>
+</html>
+
